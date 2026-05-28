@@ -1,0 +1,15 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+$product = get_product_by_id((int)($_GET['id'] ?? 0));
+if (!$product || empty($product['id_auction'])) { http_response_code(404); exit('Enchère introuvable.'); }
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_login();
+    verify_csrf();
+    $result = place_bid((int)$product['id_auction'], current_user_id(), (float)str_replace(',', '.', $_POST['montant'] ?? 0));
+    flash($result['success'] ? 'success' : 'error', $result['message']);
+    redirect('enchere.php?id=' . (int)$product['id_product']);
+}
+$history = get_bid_history((int)$product['id_auction']);
+$pageTitle = 'Enchère - ' . $product['titre'];
+require_once __DIR__ . '/partials/header.php';
+?>
