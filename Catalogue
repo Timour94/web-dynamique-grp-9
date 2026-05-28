@@ -45,3 +45,14 @@ require_once __DIR__ . '/partials/header.php';
         <?php if (!$products): ?><div class="empty-state">Aucun produit ne correspond à vos critères.</div><?php endif; ?>
     </div>
 </div>
+<script>
+window.MN_INITIAL_FILTERS = <?= json_encode($filters, JSON_UNESCAPED_UNICODE) ?>;
+window.MN_BASE_URL = "<?= e(url('')) ?>";
+</script>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel" src="<?= e(url('frontend/react/ProductCard.jsx')) ?>"></script>
+<script type="text/babel" src="<?= e(url('frontend/react/SearchFilters.jsx')) ?>"></script>
+<script type="text/babel" src="<?= e(url('frontend/react/CatalogueApp.jsx')) ?>"></script>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
