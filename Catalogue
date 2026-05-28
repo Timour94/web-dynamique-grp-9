@@ -1,0 +1,47 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+$pageTitle = 'Catalogue - Mercato Nova';
+$categories = get_categories();
+$filters = [
+    'q' => $_GET['q'] ?? '',
+    'categorie' => $_GET['categorie'] ?? '',
+    'type_vente' => $_GET['type_vente'] ?? '',
+    'prix_min' => $_GET['prix_min'] ?? '',
+    'prix_max' => $_GET['prix_max'] ?? '',
+    'sort' => $_GET['sort'] ?? 'recent',
+];
+$products = get_products($filters);
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="page-title">
+    <div><p class="eyebrow">Catalogue dynamique</p><h1>Objets sélectionnés, offres directes et ventes aux enchères</h1><p>Recherchez un produit, filtrez le catalogue et choisissez le mode de transaction adapté.</p></div>
+    <a class="btn secondary" href="<?= e(url('catalogue.php')) ?>">Réinitialiser</a>
+</section>
+
+<div class="catalogue-layout">
+    <aside class="catalogue-aside glass-card">
+        <h3>Résumé</h3>
+        <div class="filter-chip"><span>Résultats</span><strong><?= count($products) ?></strong></div>
+        <div class="filter-chip"><span>Catégories</span><strong><?= count($categories) ?></strong></div>
+        <div class="filter-chip"><span>Achat immédiat</span><strong>Oui</strong></div>
+        <div class="filter-chip"><span>Enchères</span><strong>Oui</strong></div>
+        <div class="filter-chip"><span>Négociation</span><strong>Oui</strong></div>
+        <p class="muted">Les filtres affichent les annonces selon la catégorie, le prix et le type de transaction sélectionnés.</p>
+    </aside>
+    <div>
+        <form class="filters" method="get" action="catalogue.php">
+            <input type="search" name="q" placeholder="Rechercher un produit, une marque, un objet…" value="<?= e($filters['q']) ?>">
+            <select name="categorie"><option value="">Toutes catégories</option><?php foreach ($categories as $cat): ?><option value="<?= (int)$cat['id_categorie'] ?>" <?= (string)$filters['categorie'] === (string)$cat['id_categorie'] ? 'selected' : '' ?>><?= e($cat['nom_categorie']) ?></option><?php endforeach; ?></select>
+            <select name="type_vente"><option value="">Tous types</option><option value="achat_immediat" <?= $filters['type_vente']==='achat_immediat'?'selected':'' ?>>Achat immédiat</option><option value="enchere" <?= $filters['type_vente']==='enchere'?'selected':'' ?>>Enchère</option><option value="negociation" <?= $filters['type_vente']==='negociation'?'selected':'' ?>>Négociation</option><option value="mixte" <?= $filters['type_vente']==='mixte'?'selected':'' ?>>Mixte</option></select>
+            <input type="number" step="0.01" name="prix_min" placeholder="Min €" value="<?= e($filters['prix_min']) ?>">
+            <input type="number" step="0.01" name="prix_max" placeholder="Max €" value="<?= e($filters['prix_max']) ?>">
+            <select name="sort"><option value="recent" <?= $filters['sort']==='recent'?'selected':'' ?>>Plus récent</option><option value="prix_asc" <?= $filters['sort']==='prix_asc'?'selected':'' ?>>Prix croissant</option><option value="prix_desc" <?= $filters['sort']==='prix_desc'?'selected':'' ?>>Prix décroissant</option><option value="enchere_fin" <?= $filters['sort']==='enchere_fin'?'selected':'' ?>>Enchère bientôt finie</option></select>
+            <button class="btn" type="submit">Filtrer</button>
+        </form>
+        <div id="react-catalogue" data-api="<?= e(url('backend/api/products/list.php')) ?>"></div>
+        <div id="server-catalogue" class="product-grid">
+            <?php foreach ($products as $product): ?><?php require __DIR__ . '/partials/product-card.php'; ?><?php endforeach; ?>
+        </div>
+        <?php if (!$products): ?><div class="empty-state">Aucun produit ne correspond à vos critères.</div><?php endif; ?>
+    </div>
+</div>
