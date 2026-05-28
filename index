@@ -18,3 +18,43 @@ require_once __DIR__ . '/partials/header.php';
                 <a class="btn" href="<?= e(url('catalogue.php')) ?>">Explorer le catalogue</a>
                 <a class="btn ghost" href="<?= e(url(is_logged_in() ? 'creer-annonce.php' : 'inscription.php')) ?>">Vendre un article</a>
             </div>
+            <div class="hero-kpis">
+                <div><strong><?= (int)$stats['products'] ?></strong><span>annonces</span></div>
+                <div><strong><?= (int)$stats['auctions'] ?></strong><span>enchères</span></div>
+                <div><strong><?= (int)$stats['negotiations'] ?></strong><span>négociations</span></div>
+            </div>
+        </div>
+    </div>
+    <aside class="hero-side">
+        <div class="hero-panel"><h2>Modes de transaction</h2><ul class="feature-list"><li><i>1</i><div><strong>Achat immédiat</strong><span>Panier, validation serveur et paiement simulé.</span></div></li><li><i>2</i><div><strong>Enchères</strong><span>Offres historisées, temps limité, gagnant automatique.</span></div></li><li><i>3</i><div><strong>Négociation</strong><span>Messages, contre-offres, accord, refus ou abandon.</span></div></li></ul></div>
+        <div class="hero-panel"><h2>Sécurité minimale</h2><p class="muted">Sessions PHP, rôles, requêtes préparées PDO, mots de passe hashés, CSRF et échappement HTML.</p></div>
+        <div class="hero-panel"><h2>Démonstration prête</h2><p class="muted">Comptes acheteur, vendeur et administrateur inclus dans la base SQL.</p></div>
+    </aside>
+</section>
+
+<section class="section-head"><div><p class="eyebrow">Navigation rapide</p><h2>Catégories populaires</h2></div><a href="<?= e(url('catalogue.php')) ?>">Catalogue complet →</a></section>
+<div class="category-grid">
+<?php foreach ($categories as $cat): ?>
+    <a class="category-card" href="<?= e(url('catalogue.php?categorie=' . (int)$cat['id_categorie'])) ?>"><img loading="lazy" src="<?= e(url($cat['image'] ?: 'frontend/images/default-product.svg')) ?>" alt="<?= e($cat['nom_categorie']) ?>"><span><?= e($cat['nom_categorie']) ?></span></a>
+<?php endforeach; ?>
+</div>
+
+<section class="section-head"><div><p class="eyebrow">Parcours utilisateur</p><h2>Comment ça marche ?</h2></div></section>
+<div class="how-grid">
+    <article class="how-card"><b>1</b><h3>Explorez</h3><p class="muted">Recherchez, filtrez et consultez les annonces selon la catégorie, le prix et le type de vente.</p></article>
+    <article class="how-card"><b>2</b><h3>Choisissez</h3><p class="muted">Ajoutez au panier, placez une enchère ou démarrez une négociation selon les règles métier.</p></article>
+    <article class="how-card"><b>3</b><h3>Validez</h3><p class="muted">Suivez la transaction, recevez vos notifications et consultez l’historique dans votre espace.</p></article>
+</div>
+
+<section class="section-head"><div><p class="eyebrow">Sélection Mercato</p><h2>Produits à la une</h2></div><a href="<?= e(url('catalogue.php')) ?>">Voir tout →</a></section>
+<div class="product-grid">
+<?php foreach ($featured as $product): ?><?php require __DIR__ . '/partials/product-card.php'; ?><?php endforeach; ?>
+</div>
+
+<section class="section-head"><div><p class="eyebrow">Temps limité</p><h2>Enchères à surveiller</h2></div><a href="<?= e(url('encheres.php')) ?>">Toutes les enchères →</a></section>
+<div class="spotlight">
+<?php foreach (array_slice($auctions, 0, 2) as $product): ?>
+    <article class="spotlight-card" style="background-image:url('<?= e(url($product['image'] ?: DEFAULT_PRODUCT_IMAGE)) ?>')"><p class="eyebrow">Enchère en cours</p><h2><?= e($product['titre']) ?></h2><p>Prix actuel : <strong><?= money_format_fr((float)($product['prix_actuel'] ?? $product['prix_initial'])) ?></strong></p><a class="btn" href="<?= e(url('enchere.php?id=' . (int)$product['id_product'])) ?>">Voir l’enchère</a></article>
+<?php endforeach; ?>
+</div>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
