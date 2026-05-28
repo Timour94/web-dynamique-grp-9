@@ -1,0 +1,20 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+$pageTitle = 'Accueil - Mercato Nova';
+$featured = get_products(['limit' => 8]);
+$auctions = get_products(['type_vente' => 'enchere', 'sort' => 'enchere_fin', 'limit' => 4]);
+$negotiations = get_products(['type_vente' => 'negociation', 'limit' => 4]);
+$categories = get_categories();
+$stats = get_dashboard_stats();
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="hero">
+    <div class="hero-main" style="background-image:url('<?= e(url('frontend/images/hero-banner.jpg')) ?>');">
+        <div class="hero-content">
+            <p class="eyebrow">Marketplace dynamique premium</p>
+            <h1>Achetez, vendez, enchérissez et négociez en toute confiance.</h1>
+            <p>Mercato Nova réunit les objets premium, les pièces rares et les bonnes affaires dans une application web dynamique avec rôles, transactions, panier, enchères et négociation.</p>
+            <div class="hero-actions">
+                <a class="btn" href="<?= e(url('catalogue.php')) ?>">Explorer le catalogue</a>
+                <a class="btn ghost" href="<?= e(url(is_logged_in() ? 'creer-annonce.php' : 'inscription.php')) ?>">Vendre un article</a>
+            </div>
