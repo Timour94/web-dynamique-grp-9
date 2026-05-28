@@ -1,0 +1,24 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+if (is_logged_in()) { redirect('espace-client.php'); }
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    if (login_user($_POST['email'] ?? '', $_POST['password'] ?? '')) {
+        flash('success', 'Connexion réussie.');
+        redirect(has_role('admin') ? 'espace-admin.php' : (has_role('vendeur') ? 'espace-vendeur.php' : 'espace-client.php'));
+    }
+    flash('error', 'Email ou mot de passe incorrect.');
+}
+$pageTitle = 'Connexion - Mercato Nova';
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="auth-card narrow">
+    <div class="auth-header"><p class="eyebrow">Accès sécurisé</p><h1>Connexion</h1><p class="muted">Connectez-vous pour acheter, vendre, enchérir ou négocier.</p></div>
+    <form method="post" class="form-stack">
+        <?= csrf_field() ?>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Mot de passe" required>
+        <button class="btn full" type="submit">Se connecter</button>
+    </form>
+</section>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
