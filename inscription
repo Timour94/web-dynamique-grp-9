@@ -1,0 +1,25 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+if (is_logged_in()) { redirect('espace-client.php'); }
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    $result = register_user($_POST);
+    if ($result['success']) { flash('success', 'Compte créé avec succès.'); redirect(user_role() === 'vendeur' ? 'espace-vendeur.php' : 'espace-client.php'); }
+    foreach ($result['errors'] as $error) { flash('error', $error); }
+}
+$pageTitle = 'Inscription - Mercato Nova';
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="auth-card">
+    <div class="auth-header"><p class="eyebrow">Rejoindre Mercato Nova</p><h1>Créer un compte</h1><p class="muted">Choisissez un rôle acheteur ou vendeur. L’administrateur conserve ses droits de modération.</p></div>
+    <form method="post" class="form-grid" novalidate>
+        <?= csrf_field() ?>
+        <input name="prenom" placeholder="Prénom" required><input name="nom" placeholder="Nom" required>
+        <input type="email" name="email" placeholder="Email" required><input name="telephone" placeholder="Téléphone">
+        <input name="adresse" placeholder="Adresse"><input name="ville" placeholder="Ville"><input name="code_postal" placeholder="Code postal">
+        <select name="role" required><option value="acheteur">Acheteur</option><option value="vendeur">Vendeur</option></select>
+        <input type="password" name="password" placeholder="Mot de passe" required><input type="password" name="confirm_password" placeholder="Confirmer le mot de passe" required>
+        <button class="btn full" type="submit">S’inscrire</button>
+    </form>
+</section>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
