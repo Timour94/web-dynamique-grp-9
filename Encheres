@@ -1,0 +1,25 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+$pageTitle = 'Enchères - Mercato Nova';
+$products = get_products(['type_vente' => 'enchere', 'sort' => 'enchere_fin', 'limit' => 100]);
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="page-title">
+    <div>
+        <p class="eyebrow">Vente par enchère</p>
+        <h1>Enchères en cours</h1>
+        <p>Retrouvez les annonces avec historique des offres, prix actuel et temps limité.</p>
+    </div>
+    <a class="btn secondary" href="<?= e(url('catalogue.php')) ?>">Retour catalogue</a>
+</section>
+
+<?php if ($products): ?>
+    <div class="product-grid">
+        <?php foreach ($products as $product): ?>
+            <?php require __DIR__ . '/partials/product-card.php'; ?>
+        <?php endforeach; ?>
+    </div>
+<?php else: ?>
+    <div class="empty-state">Aucune enchère active pour le moment.</div>
+<?php endif; ?>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
