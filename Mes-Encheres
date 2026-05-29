@@ -1,0 +1,12 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+require_login();
+$bids = get_user_bids(current_user_id());
+$pageTitle = 'Mes enchères';
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="page-title"><h1>Mes enchères</h1><p>Historique de vos offres et résultat des enchères.</p></section>
+<div class="table-wrap"><table><thead><tr><th>Produit</th><th>Votre offre</th><th>Prix actuel</th><th>Statut</th><th>Fin</th></tr></thead><tbody>
+<?php foreach ($bids as $b): ?><tr><td><a href="enchere.php?id=<?= (int)$b['id_product'] ?>"><?= e($b['titre']) ?></a></td><td><?= money_format_fr((float)$b['montant']) ?></td><td><?= money_format_fr((float)$b['prix_actuel']) ?></td><td><?= e($b['statut_enchere']) ?><?= (int)$b['id_gagnant']===current_user_id() ? ' — gagnée' : '' ?></td><td><?= e($b['date_fin']) ?></td></tr><?php endforeach; ?>
+</tbody></table></div>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
