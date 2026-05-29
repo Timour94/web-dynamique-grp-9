@@ -1,0 +1,25 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+$pageTitle = 'Négociations - Mercato Nova';
+$products = get_products(['type_vente' => 'negociation', 'sort' => 'recent', 'limit' => 100]);
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="page-title">
+    <div>
+        <p class="eyebrow">Vente par négociation</p>
+        <h1>Produits négociables</h1>
+        <p>Proposez un prix, échangez avec le vendeur et suivez chaque étape de la discussion.</p>
+    </div>
+    <a class="btn secondary" href="<?= e(url('catalogue.php')) ?>">Retour catalogue</a>
+</section>
+
+<?php if ($products): ?>
+    <div class="product-grid">
+        <?php foreach ($products as $product): ?>
+            <?php require __DIR__ . '/partials/product-card.php'; ?>
+        <?php endforeach; ?>
+    </div>
+<?php else: ?>
+    <div class="empty-state">Aucune annonce négociable pour le moment.</div>
+<?php endif; ?>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
