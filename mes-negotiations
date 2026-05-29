@@ -1,0 +1,12 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+require_login();
+$negs = get_user_negotiations(current_user_id());
+$pageTitle = 'Mes négociations';
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="page-title"><h1>Mes négociations</h1><p>Accords, refus, expirations et échanges en cours.</p></section>
+<div class="table-wrap"><table><thead><tr><th>Produit</th><th>Prix actuel</th><th>Statut</th><th>Date</th><th>Action</th></tr></thead><tbody>
+<?php foreach ($negs as $n): ?><tr><td><?= e($n['titre']) ?></td><td><?= money_format_fr((float)$n['prix_actuel']) ?></td><td><?= e($n['statut_negociation']) ?></td><td><?= e($n['date_debut']) ?></td><td><a href="negotiation.php?id=<?= (int)$n['id_negotiation'] ?>">Ouvrir</a></td></tr><?php endforeach; ?>
+</tbody></table></div>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
