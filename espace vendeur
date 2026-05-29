@@ -1,0 +1,21 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+require_role(['vendeur','admin']);
+$pageTitle = 'Espace vendeur - Mercato Nova';
+$products = get_user_products(current_user_id());
+$sales = get_sales_by_seller(current_user_id());
+$negs = get_user_negotiations(current_user_id());
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="section-head"><div><p class="eyebrow">Espace vendeur</p><h1>Gérez votre boutique Mercato Nova</h1><p>Création d’annonces, suivi des ventes, enchères et négociations.</p></div><a class="btn" href="creer-annonce.php">Créer une annonce</a></section>
+<div class="dashboard-grid">
+    <a class="dashboard-card" href="mes-ventes.php"><strong><?= count($sales) ?></strong><span>Ventes</span></a>
+    <a class="dashboard-card" href="mes-negociations.php"><strong><?= count($negs) ?></strong><span>Négociations</span></a>
+    <div class="dashboard-card"><strong><?= count($products) ?></strong><span>Annonces</span></div>
+    <a class="dashboard-card" href="notifications.php"><strong><?= unread_notifications_count(current_user_id()) ?></strong><span>Notifications</span></a>
+</div>
+<section class="section-head"><div><p class="eyebrow">Gestion</p><h2>Mes annonces</h2></div></section>
+<div class="table-wrap"><table><thead><tr><th>Titre</th><th>Type</th><th>Prix</th><th>Statut</th><th>Action</th></tr></thead><tbody>
+<?php foreach ($products as $p): ?><tr><td><?= e($p['titre']) ?></td><td><?= e($p['type_vente']) ?></td><td><?= money_format_fr((float)($p['prix_achat_immediat'] ?: $p['prix_initial'])) ?></td><td><span class="status <?= e($p['statut']) ?>"><?= e($p['statut']) ?></span></td><td><a class="btn secondary small" href="modifier-annonce.php?id=<?= (int)$p['id_product'] ?>">Modifier</a></td></tr><?php endforeach; ?>
+</tbody></table></div>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
