@@ -1,0 +1,12 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+require_role('admin');
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    if (isset($_POST['moderate'])) { moderate_product((int)$_POST['id_product'], $_POST['moderate'], current_user_id()); flash('success', 'Action de modération enregistrée.'); redirect('espace-admin.php'); }
+    if (isset($_POST['user_status'])) { set_user_status((int)$_POST['id_user'], $_POST['user_status'], current_user_id()); flash('success', 'Statut utilisateur modifié.'); redirect('espace-admin.php'); }
+}
+$stats = get_dashboard_stats(); $pending = get_pending_products(); $users = get_all_users(); $reports = get_reports();
+$pageTitle = 'Administration - Mercato Nova';
+require_once __DIR__ . '/partials/header.php';
+?>
