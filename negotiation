@@ -1,0 +1,49 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+require_login();
+$userId = current_user_id();
+$productId = (int)($_GET['product_id'] ?? 0);
+$negotiationId = (int)($_GET['id'] ?? 0);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    $action = $_POST['action'] ?? 'counter';
+    if ($action === 'start') {
+        $result = start_negotiation((int)$_POST['id_product'], $userId, (float)str_replace(',', '.', $_POST['offre_prix'] ?? 0), $_POST['message'] ?? '');
+        flash($result['success'] ? 'success' : 'error', $result['message']);
+        redirect($result['success'] ? 'negotiation.php?id=' . (int)$result['id_negotiation'] : 'produit.php?id=' . (int)$_POST['id_product']);
+    } elseif ($action === 'counter') {
+        $result = send_counter_offer((int)$_POST['id_negotiation'], $userId, (float)str_replace(',', '.', $_POST['offre_prix'] ?? 0), $_POST['message'] ?? '');
+        flash($result['success'] ? 'success' : 'error', $result['message']);
+        redirect('negotiation.php?id=' . (int)$_POST['id_negotiation']);
+    } elseif ($action === 'accept') {
+        $result = accept_negotiation((int)$_POST['id_negotiation'], $userId);
+        flash($result['success'] ? 'success' : 'error', $result['message']);
+        redirect($result['success'] && isset($result['order_id']) ? 'confirmation.php?id=' . (int)$result['order_id'] : 'mes-negociations.php');
+    } elseif ($action === 'refuse') {
+        $result = refuse_negotiation((int)$_POST['id_negotiation'], $userId); flash($result['success'] ? 'success' : 'error', $result['message']); redirect('mes-negociations.php');
+    } elseif ($action === 'abandon') {
+        $result = abandon_negotiation((int)$_POST['id_negotiation'], $userId); flash($result['success'] ? 'success' : 'error', $result['message']); redirect('mes-negociations.php');
+    }
+}
+$product = $productId ? get_product_by_id($productId) : null;
+$neg = $negotiationId ? get_negotiation($negotiationId, $userId) : null;
+$pageTitle = 'Négociation - Mercato Nova';
+require_once __DIR__ . '/partials/header.php';
+?>
+<?php if ($product && !$neg): ?>
+<section class="split-layout">
+    <img class="detail-image" src="<?= e(url($product['image'] ?: DEFAULT_PRODUCT_IMAGE)) ?>" alt="<?= e($product['titre']) ?>">
+    <div class="auth-card" style="margin:0"><div class="auth-header"><p class="eyebrow">Négociation sécurisée</p><h1><?= e($product['titre']) ?></h1><p>Prix affiché : <strong><?= money_format_fr((float)($product['prix_achat_immediat'] ?: $product['prix_initial'])) ?></strong></p></div><form method="post" class="form-stack"><?= csrf_field() ?><input type="hidden" name="action" value="start"><input type="hidden" name="id_product" value="<?= (int)$product['id_product'] ?>"><input type="number" step="0.01" name="offre_prix" placeholder="Votre offre" required><textarea name="message" placeholder="Message au vendeur"></textarea><button class="btn" type="submit">Envoyer une offre</button></form></div>
+</section>
+<?php elseif ($neg): ?>
+<section class="page-title"><div><p class="eyebrow">Discussion encadrée</p><h1>Négociation : <?= e($neg['titre']) ?></h1><p>Statut : <strong><?= e($neg['statut_negociation']) ?></strong> — Prix actuel : <strong><?= money_format_fr((float)$neg['prix_actuel']) ?></strong> — Échanges : <?= count($neg['messages']) ?>/<?= MAX_NEGOTIATION_MESSAGES ?></p></div></section>
+<div class="message-list">
+<?php foreach ($neg['messages'] as $m): ?>
+    <article class="message-card <?= (int)$m['id_sender']===$userId ? 'mine' : '' ?>"><div class="message-meta"><strong><?= e($m['prenom'] . ' ' . $m['nom']) ?></strong><span><?= e($m['date_message']) ?></span></div><p><?= e($m['message'] ?: 'Offre envoyée sans message.') ?></p><p class="price"><?= money_format_fr((float)$m['offre_prix']) ?></p></article>
+<?php endforeach; ?>
+</div>
+<?php if ($neg['statut_negociation'] === 'en_cours'): ?>
+<section class="auth-card wide"><h2>Répondre à la négociation</h2><form method="post" class="form-grid"><?= csrf_field() ?><input type="hidden" name="action" value="counter"><input type="hidden" name="id_negotiation" value="<?= (int)$neg['id_negotiation'] ?>"><input type="number" step="0.01" name="offre_prix" placeholder="Nouvelle offre" required><textarea name="message" placeholder="Message"></textarea><button class="btn" type="submit">Envoyer une contre-offre</button></form><div class="actions-row"><form method="post"><?= csrf_field() ?><input type="hidden" name="id_negotiation" value="<?= (int)$neg['id_negotiation'] ?>"><button class="btn" name="action" value="accept">Accepter</button></form><form method="post"><?= csrf_field() ?><input type="hidden" name="id_negotiation" value="<?= (int)$neg['id_negotiation'] ?>"><button class="btn danger" name="action" value="refuse">Refuser</button></form><form method="post"><?= csrf_field() ?><input type="hidden" name="id_negotiation" value="<?= (int)$neg['id_negotiation'] ?>"><button class="btn secondary" name="action" value="abandon">Abandonner</button></form></div></section>
+<?php endif; ?>
+<?php else: ?><div class="empty-state">Négociation introuvable.</div><?php endif; ?>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
