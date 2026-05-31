@@ -1,31 +1,131 @@
 <?php
 require_once __DIR__ . '/backend/bootstrap.php';
 require_role(['vendeur','admin']);
+
 $product = get_product_by_id((int)($_GET['id'] ?? 0));
-if (!$product || !can_manage_product($product)) { http_response_code(403); exit('Accès refusé.'); }
+if (!$product || !can_manage_product($product)) {
+    http_response_code(403);
+    exit('Accès refusé.');
+}
+if ($product['statut'] === 'vendu') {
+    flash('error', 'Impossible de modifier une annonce déjà vendue.');
+    redirect('espace-vendeur.php');
+}
+
 $categories = get_categories();
+$images = get_product_images((int)$product['id_product']);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
-    $image = handle_product_image_upload('image');
-    $result = update_product((int)$product['id_product'], $_POST, current_user_id(), $image);
-    if ($result['success']) { flash('success', 'Annonce modifiée.'); redirect('espace-vendeur.php'); }
-    foreach ($result['errors'] as $error) { flash('error', $error); }
+    $uploadedImages = collect_product_uploaded_images();
+    $result = update_product((int)$product['id_product'], $_POST, current_user_id(), $uploadedImages);
+    if ($result['success']) {
+        flash('success', 'Annonce modifiée. Galerie et paramètres mis à jour.');
+        redirect('modifier-annonce.php?id=' . (int)$product['id_product']);
+    }
+    foreach ($result['errors'] as $error) {
+        flash('error', $error);
+    }
+    $product = get_product_by_id((int)$product['id_product']) ?: array_merge($product, $_POST);
+    $images = get_product_images((int)$product['id_product']);
 }
+
 $pageTitle = 'Modifier annonce - Mercato Nova';
 require_once __DIR__ . '/partials/header.php';
 ?>
+<section class="page-title">
+    <div>
+        <p class="eyebrow">Espace vendeur</p>
+        <h1>Modifier l’annonce</h1>
+        <p>Modification complète : informations, prix, stock, type de vente, paramètres d’enchère et galerie d’images.</p>
+    </div>
+    <a class="btn secondary" href="<?= e(url('espace-vendeur.php')) ?>">Retour espace vendeur</a>
+</section>
+
 <section class="auth-card wide">
-<h1>Modifier l’annonce</h1>
-<form method="post" enctype="multipart/form-data" class="form-grid">
-<?= csrf_field() ?>
-<input name="titre" value="<?= e($product['titre']) ?>" required>
-<select name="id_categorie" required><?php foreach ($categories as $cat): ?><option value="<?= (int)$cat['id_categorie'] ?>" <?= (int)$product['id_categorie']===(int)$cat['id_categorie']?'selected':'' ?>><?= e($cat['nom_categorie']) ?></option><?php endforeach; ?></select>
-<input name="etat_produit" value="<?= e($product['etat_produit']) ?>">
-<input type="number" name="stock" min="1" value="<?= (int)$product['stock'] ?>">
-<input type="number" step="0.01" name="prix_achat_immediat" value="<?= e((string)$product['prix_achat_immediat']) ?>">
-<input type="file" name="image" accept="image/*">
-<textarea name="description" required><?= e($product['description']) ?></textarea>
-<button class="btn full" type="submit">Enregistrer</button>
-</form>
+    <div class="auth-header">
+        <p class="eyebrow">Annonce #<?= (int)$product['id_product'] ?></p>
+        <h2><?= e($product['titre']) ?></h2>
+        <p class="muted">Statut actuel : <?= e($product['statut']) ?>. Une annonce refusée repasse en attente après modification.</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="form-grid">
+        <?= csrf_field() ?>
+
+        <label>
+            Titre
+            <input name="titre" value="<?= e($product['titre'] ?? '') ?>" required>
+        </label>
+
+        <label>
+            Catégorie
+            <select name="id_categorie" required>
+                <?php foreach ($categories as $cat): ?>
+                    <option value="<?= (int)$cat['id_categorie'] ?>" <?= (int)$product['id_categorie'] === (int)$cat['id_categorie'] ? 'selected' : '' ?>><?= e($cat['nom_categorie']) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+
+        <label>
+            Type de vente
+            <select name="type_vente" required>
+                <option value="achat_immediat" <?= ($product['type_vente'] ?? '') === 'achat_immediat' ? 'selected' : '' ?>>Achat immédiat</option>
+                <option value="enchere" <?= ($product['type_vente'] ?? '') === 'enchere' ? 'selected' : '' ?>>Enchère</option>
+                <option value="negociation" <?= ($product['type_vente'] ?? '') === 'negociation' ? 'selected' : '' ?>>Négociation</option>
+                <option value="mixte" <?= ($product['type_vente'] ?? '') === 'mixte' ? 'selected' : '' ?>>Mixte</option>
+            </select>
+        </label>
+
+        <label>
+            État du produit
+            <input name="etat_produit" value="<?= e($product['etat_produit'] ?? '') ?>" placeholder="Très bon état">
+        </label>
+
+        <label>
+            Stock
+            <input type="number" name="stock" min="1" value="<?= (int)($product['stock'] ?? 1) ?>">
+        </label>
+
+        <label>
+            Prix initial / prix de départ
+            <input type="number" step="0.01" name="prix_initial" value="<?= e((string)($product['prix_initial'] ?? '')) ?>" required>
+        </label>
+
+        <label>
+            Prix achat immédiat
+            <input type="number" step="0.01" name="prix_achat_immediat" value="<?= e((string)($product['prix_achat_immediat'] ?? '')) ?>" placeholder="Obligatoire pour achat immédiat ou mixte">
+        </label>
+
+        <label>
+            Date de fin d’enchère
+            <input type="datetime-local" name="date_fin_enchere" value="<?= !empty($product['date_fin']) ? e(date('Y-m-d\TH:i', strtotime($product['date_fin']))) : '' ?>">
+        </label>
+
+        <label class="full">
+            Ajouter des images à la galerie
+            <input type="file" name="images[]" accept="image/*" multiple>
+            <span class="image-note">JPG, PNG, WEBP ou GIF. Les images sont compressées/redimensionnées si GD est disponible.</span>
+        </label>
+
+        <?php if ($images): ?>
+            <fieldset class="gallery-admin full">
+                <legend>Galerie actuelle</legend>
+                <?php foreach ($images as $img): ?>
+                    <div class="gallery-admin-item">
+                        <img src="<?= e(url($img['chemin_image'])) ?>" alt="Image annonce">
+                        <label><input type="radio" name="main_image_id" value="<?= (int)$img['id_image'] ?>" <?= (int)$img['image_principale'] === 1 ? 'checked' : '' ?>> Image principale</label>
+                        <label><input type="checkbox" name="delete_images[]" value="<?= (int)$img['id_image'] ?>"> Supprimer</label>
+                    </div>
+                <?php endforeach; ?>
+            </fieldset>
+        <?php endif; ?>
+
+        <label class="full">
+            Description
+            <textarea name="description" required><?= e($product['description'] ?? '') ?></textarea>
+        </label>
+
+        <button class="btn full" type="submit">Enregistrer les modifications</button>
+    </form>
 </section>
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
