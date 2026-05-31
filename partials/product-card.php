@@ -18,6 +18,15 @@ $canNegotiate = in_array($type, ['negociation', 'mixte'], true);
             <img loading="lazy" src="<?= e(url($image)) ?>" alt="<?= e($product['titre']) ?>">
         </a>
         <span class="product-badge badge-<?= e($type) ?>"><?= e($typeLabels[$type] ?? $type) ?></span>
+        <?php if (is_logged_in() && (int)($product['id_vendeur'] ?? 0) !== current_user_id()): ?>
+            <?php $isFav = is_favorite(current_user_id(), (int)$product['id_product']); ?>
+            <form class="favorite-form" action="<?= e(url('backend/api/favorites/toggle.php')) ?>" method="post">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id_product" value="<?= (int)$product['id_product'] ?>">
+                <input type="hidden" name="return" value="<?= e(basename($_SERVER['REQUEST_URI'] ?? 'catalogue.php')) ?>">
+                <button class="favorite-button <?= $isFav ? 'active' : '' ?>" type="submit" title="<?= $isFav ? 'Retirer des favoris' : 'Ajouter aux favoris' ?>"><?= $isFav ? '♥' : '♡' ?></button>
+            </form>
+        <?php endif; ?>
     </div>
     <div class="product-body">
         <p class="muted"><?= e($product['nom_categorie'] ?? '') ?> · <?= e($product['etat_produit'] ?? 'Sélection vérifiée') ?></p>
