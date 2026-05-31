@@ -1,0 +1,14 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+require_role(['vendeur','admin']);
+$categories = get_categories();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    $image = handle_product_image_upload('image');
+    $result = create_product($_POST, current_user_id(), $image);
+    if ($result['success']) { flash('success', 'Annonce créée. Elle attend la validation administrateur.'); redirect('espace-vendeur.php'); }
+    foreach ($result['errors'] as $error) { flash('error', $error); }
+}
+$pageTitle = 'Créer une annonce - Mercato Nova';
+require_once __DIR__ . '/partials/header.php';
+?>
