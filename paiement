@@ -1,0 +1,9 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+require_login();
+$items = get_cart_items(current_user_id());
+if (!$items) { flash('error', 'Votre panier est vide.'); redirect('panier.php'); }
+$total = cart_total($items);
+$pageTitle = 'Paiement simulé - Mercato Nova';
+require_once __DIR__ . '/partials/header.php';
+?>
