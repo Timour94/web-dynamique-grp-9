@@ -12,3 +12,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pageTitle = 'Créer une annonce - Mercato Nova';
 require_once __DIR__ . '/partials/header.php';
 ?>
+<section class="auth-card wide">
+    <div class="auth-header"><p class="eyebrow">Espace vendeur</p><h1>Créer une annonce</h1><p class="muted">Renseignez les informations métier : type de vente, prix, stock, image et description.</p></div>
+    <form method="post" enctype="multipart/form-data" class="form-grid">
+        <?= csrf_field() ?>
+        <input name="titre" placeholder="Titre" required>
+        <select name="id_categorie" required><option value="">Catégorie</option><?php foreach ($categories as $cat): ?><option value="<?= (int)$cat['id_categorie'] ?>"><?= e($cat['nom_categorie']) ?></option><?php endforeach; ?></select>
+        <select name="type_vente" required><option value="achat_immediat">Achat immédiat</option><option value="enchere">Enchère</option><option value="negociation">Négociation</option><option value="mixte">Mixte</option></select>
+        <input name="etat_produit" placeholder="État du produit" value="Très bon état"><input type="number" name="stock" min="1" value="1" placeholder="Stock">
+        <input type="number" step="0.01" name="prix_initial" placeholder="Prix initial / départ" required><input type="number" step="0.01" name="prix_achat_immediat" placeholder="Prix achat immédiat">
+        <input type="datetime-local" name="date_fin_enchere" placeholder="Date fin enchère"><input type="file" name="image" accept="image/*">
+        <textarea name="description" placeholder="Description détaillée" required></textarea>
+        <button class="btn full" type="submit">Soumettre à modération</button>
+    </form>
+</section>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
