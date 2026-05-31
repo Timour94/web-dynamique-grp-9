@@ -1,0 +1,21 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+$product = get_product_by_id((int)($_GET['id'] ?? 0));
+if (!$product) { http_response_code(404); exit('Produit introuvable.'); }
+$pageTitle = $product['titre'] . ' - Mercato Nova';
+$images = get_product_images((int)$product['id_product']);
+$typeLabels = ['achat_immediat'=>'Achat immédiat','enchere'=>'Enchère','negociation'=>'Négociation','mixte'=>'Mixte'];
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="product-detail">
+    <div class="detail-media">
+        <img class="detail-image" id="main-product-image" src="<?= e(url($product['image'] ?: DEFAULT_PRODUCT_IMAGE)) ?>" alt="<?= e($product['titre']) ?>">
+        <?php if ($images): ?><div class="gallery"><?php foreach ($images as $img): ?><img src="<?= e(url($img['chemin_image'])) ?>" alt="Image produit" data-large="<?= e(url($img['chemin_image'])) ?>"><?php endforeach; ?></div><?php endif; ?>
+    </div>
+    <div class="detail-info">
+        <p class="eyebrow"><?= e($product['nom_categorie']) ?> · <?= e($typeLabels[$product['type_vente']] ?? $product['type_vente']) ?></p>
+        <h1><?= e($product['titre']) ?></h1>
+        <p class="muted"><?= nl2br(e($product['description'])) ?></p>
+        <div class="dashboard-grid" style="grid-template-columns:repeat(2,1fr)">
+            <div class="dashboard-card"><strong><?= e($product['etat_produit']) ?></strong><span>État</span></div>
+            <div class="dashboard-card"><strong><?= (int)$product['stock'] ?></strong><span>Stock</span></div>
