@@ -15,11 +15,20 @@ require_once __DIR__ . '/partials/header.php';
     <div class="detail-info">
         <p class="eyebrow"><?= e($product['nom_categorie']) ?> · <?= e($typeLabels[$product['type_vente']] ?? $product['type_vente']) ?></p>
         <h1><?= e($product['titre']) ?></h1>
+        <?php if (is_logged_in() && (int)$product['id_vendeur'] !== current_user_id()): ?>
+            <?php $isFavDetail = is_favorite(current_user_id(), (int)$product['id_product']); ?>
+            <form class="actions-row" action="<?= e(url('backend/api/favorites/toggle.php')) ?>" method="post">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id_product" value="<?= (int)$product['id_product'] ?>">
+                <input type="hidden" name="return" value="produit.php?id=<?= (int)$product['id_product'] ?>">
+                <button class="btn secondary" type="submit"><?= $isFavDetail ? 'Retirer des favoris' : 'Ajouter aux favoris' ?></button>
+            </form>
+        <?php endif; ?>
         <p class="muted"><?= nl2br(e($product['description'])) ?></p>
         <div class="dashboard-grid" style="grid-template-columns:repeat(2,1fr)">
             <div class="dashboard-card"><strong><?= e($product['etat_produit']) ?></strong><span>État</span></div>
             <div class="dashboard-card"><strong><?= (int)$product['stock'] ?></strong><span>Stock</span></div>
- </div>
+        </div>
         <?php if ($product['prix_achat_immediat']): ?><p class="price">Achat immédiat : <?= money_format_fr((float)$product['prix_achat_immediat']) ?></p><?php endif; ?>
         <?php if (!empty($product['prix_actuel'])): ?><p class="price">Prix actuel enchère : <?= money_format_fr((float)$product['prix_actuel']) ?></p><?php endif; ?>
         <div class="actions-row">
