@@ -18,7 +18,7 @@ require_once __DIR__ . '/partials/header.php';
     <div class="detail-info">
         <p class="eyebrow">Vente par enchère</p><h1><?= e($product['titre']) ?></h1><p class="muted"><?= e($product['description']) ?></p>
         <div class="dashboard-grid" style="grid-template-columns:repeat(2,1fr)"><div class="dashboard-card"><strong><?= money_format_fr((float)$product['prix_actuel']) ?></strong><span>Prix actuel</span></div><div class="dashboard-card"><strong><?= count($history) ?></strong><span>Offres</span></div></div>
-        <p>Date de fin : <strong><?= e($product['date_fin']) ?></strong></p><div id="auction-timer" data-end="<?= e($product['date_fin']) ?>"></div>
+        <p>Date de fin : <strong><?= e($product['date_fin']) ?></strong></p><div id="auction-timer" data-end="<?= e($product['date_fin']) ?>" data-auction-id="<?= (int)$product['id_auction'] ?>"></div>
         <?php if (is_logged_in() && (int)$product['id_vendeur'] !== current_user_id() && $product['statut_enchere'] === 'en_cours'): ?>
             <form method="post" class="bid-form form-stack"><?= csrf_field() ?><input type="number" step="0.01" name="montant" min="<?= e((string)((float)$product['prix_actuel'] + MIN_BID_STEP)) ?>" placeholder="Votre offre minimale : <?= money_format_fr((float)$product['prix_actuel'] + MIN_BID_STEP) ?>" required><button class="btn" type="submit">Placer mon enchère</button></form>
         <?php else: ?><p class="muted">Connectez-vous avec un compte acheteur pour enchérir, ou vérifiez que l’enchère est encore ouverte.</p><?php endif; ?>
