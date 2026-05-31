@@ -10,4 +10,20 @@ require_once __DIR__ . '/partials/header.php';
 <div class="checkout-steps"><span class="active">1 Panier</span><span>2 Livraison</span><span>3 Paiement simulé</span><span>4 Confirmation</span></div>
 <?php if (!$items): ?>
     <div class="empty-state">Votre panier est vide. <a href="<?= e(url('catalogue.php')) ?>">Voir le catalogue</a></div>
+<?php else: ?>
+    <section class="checkout-grid">
+        <div class="cart-list">
+            <?php foreach ($items as $item): ?>
+                <article class="cart-item">
+                    <img src="<?= e(url($item['image'] ?: DEFAULT_PRODUCT_IMAGE)) ?>" alt="<?= e($item['titre']) ?>">
+                    <div><h3><?= e($item['titre']) ?></h3><p class="muted"><?= money_format_fr((float)$item['prix_unitaire']) ?> / unité · Stock <?= (int)$item['stock'] ?></p></div>
+                    <form method="post" action="<?= e(url('backend/api/cart/update_quantity.php')) ?>" class="inline-form"><?= csrf_field() ?><input type="hidden" name="id_cart_item" value="<?= (int)$item['id_cart_item'] ?>"><input type="number" name="quantite" value="<?= (int)$item['quantite'] ?>" min="1" max="<?= (int)$item['stock'] ?>"><button class="btn secondary" type="submit">Modifier</button></form>
+                    <form method="post" action="<?= e(url('backend/api/cart/remove.php')) ?>"><?= csrf_field() ?><input type="hidden" name="id_cart_item" value="<?= (int)$item['id_cart_item'] ?>"><button class="btn danger" type="submit">Supprimer</button></form>
+                </article>
+            <?php endforeach; ?>
+        </div>
+        <aside class="summary-box"><p class="eyebrow">Résumé de commande</p><h2>Total : <?= money_format_fr($total) ?></h2><p class="muted">Le total est recalculé côté serveur lors de la validation afin d’éviter les incohérences.</p><a class="btn full" href="<?= e(url('paiement.php')) ?>">Valider le panier</a></aside>
+    </section>
+<?php endif; ?>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
 
