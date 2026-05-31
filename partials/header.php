@@ -14,9 +14,10 @@ $cartItemsCount = $user ? count(get_cart_items((int)$user['id_user'])) : 0;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($pageTitle ?? APP_NAME) ?></title>
     <link rel="icon" type="image/svg+xml" href="<?= e(url('frontend/images/favicon.svg')) ?>">
-    <link rel="stylesheet" href="<?= e(url('frontend/css/style.css')) ?>?v=clean-v3">
-    <link rel="stylesheet" href="<?= e(url('frontend/css/responsive.css')) ?>?v=clean-v3">
-    <script defer src="<?= e(url('frontend/js/main.js')) ?>"></script>
+    <link rel="stylesheet" href="<?= e(url('frontend/css/style.css')) ?>?v=clean-v4">
+    <link rel="stylesheet" href="<?= e(url('frontend/css/responsive.css')) ?>?v=clean-v4">
+    <script defer src="<?= e(url('frontend/js/main.js')) ?>?v=live-v1"></script>
+    <?php if ($user): ?><script defer src="<?= e(url('frontend/js/notifications.js')) ?>?v=live-v1"></script><?php endif; ?>
 </head>
 <body>
 <div class="top-ribbon">
@@ -42,7 +43,9 @@ $cartItemsCount = $user ? count(get_cart_items((int)$user['id_user'])) : 0;
             <?php endif; ?>
             <?php if ($user): ?>
                 <a class="nav-icon" href="<?= e(url('panier.php')) ?>">Panier <span class="badge soft"><?= $cartItemsCount ?></span></a>
-                <a class="nav-icon" href="<?= e(url('notifications.php')) ?>">Notifications <span class="badge"><?= $notifCount ?></span></a>
+                <a class="nav-icon" href="<?= e(url('notifications.php')) ?>">Notifications <span class="badge" id="notification-count"><?= $notifCount ?></span></a>
+                <a class="<?= $current === 'mes-favoris.php' ? 'active' : '' ?>" href="<?= e(url('mes-favoris.php')) ?>">Favoris</a>
+                <a class="<?= $current === 'profil.php' ? 'active' : '' ?>" href="<?= e(url('profil.php')) ?>">Profil</a>
                 <a class="<?= str_starts_with($current, 'espace') ? 'active' : '' ?>" href="<?= e(url(has_role('admin') ? 'espace-admin.php' : (has_role('vendeur') ? 'espace-vendeur.php' : 'espace-client.php'))) ?>">Mon espace</a>
                 <a href="<?= e(url('deconnexion.php')) ?>">Déconnexion</a>
             <?php else: ?>
