@@ -1,0 +1,16 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+require_login();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') { verify_csrf(); mark_notification_read((int)($_POST['id_notification'] ?? 0), current_user_id()); redirect('notifications.php'); }
+$notifications = get_notifications(current_user_id());
+$pageTitle = 'Notifications - Mercato Nova';
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="page-title"><div><p class="eyebrow">Centre d’activité</p><h1>Notifications</h1><p>Suivi des achats, enchères, négociations, modération et commandes.</p></div></section>
+<div class="notifications-list" data-notifications-live data-csrf="<?= e(csrf_token()) ?>">
+<?php foreach ($notifications as $n): ?>
+    <article class="notification <?= $n['est_lue'] ? 'read' : 'unread' ?>"><div><h3><?= e($n['titre']) ?></h3><p><?= e($n['message']) ?></p><p class="muted"><?= e($n['date_creation']) ?> · <?= e($n['type_notification']) ?></p></div><div class="actions-row"><?php if ($n['lien']): ?><a class="btn secondary" href="<?= e(url($n['lien'])) ?>">Ouvrir</a><?php endif; ?><?php if (!$n['est_lue']): ?><form method="post"><?= csrf_field() ?><input type="hidden" name="id_notification" value="<?= (int)$n['id_notification'] ?>"><button class="btn" type="submit">Marquer lu</button></form><?php endif; ?></div></article>
+<?php endforeach; ?>
+<?php if (!$notifications): ?><div class="empty-state">Aucune notification pour le moment.</div><?php endif; ?>
+</div>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
