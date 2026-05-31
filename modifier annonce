@@ -1,1 +1,13 @@
-
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+require_role(['vendeur','admin']);
+$product = get_product_by_id((int)($_GET['id'] ?? 0));
+if (!$product || !can_manage_product($product)) { http_response_code(403); exit('Accès refusé.'); }
+$categories = get_categories();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    $image = handle_product_image_upload('image');
+    $result = update_product((int)$product['id_product'], $_POST, current_user_id(), $image);
+    if ($result['success']) { flash('success', 'Annonce modifiée.'); redirect('espace-vendeur.php'); }
+    foreach ($result['errors'] as $error) { flash('error', $error); }
+}
