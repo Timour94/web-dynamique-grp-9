@@ -1,0 +1,12 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+require_login();
+$orders = get_user_orders(current_user_id());
+$pageTitle = 'Mes achats';
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="page-title"><h1>Mes achats</h1><p>Historique des commandes et paiements simulés.</p></section>
+<div class="table-wrap"><table><thead><tr><th>N°</th><th>Date</th><th>Total</th><th>Statut</th><th>Action</th></tr></thead><tbody>
+<?php foreach ($orders as $o): ?><tr><td>#<?= (int)$o['id_order'] ?></td><td><?= e($o['date_commande']) ?></td><td><?= money_format_fr((float)$o['montant_total']) ?></td><td><?= e($o['statut_commande']) ?></td><td><a href="confirmation.php?id=<?= (int)$o['id_order'] ?>">Détails</a></td></tr><?php endforeach; ?>
+</tbody></table></div>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
