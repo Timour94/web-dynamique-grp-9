@@ -305,3 +305,10 @@ INSERT INTO notifications (id_user, titre, message, type_notification, lien, est
 (6, 'Nouvelle contre-offre', 'Une négociation attend votre réponse.', 'negociation', 'mes-negociations.php', 0, DATE_SUB(NOW(), INTERVAL 2 HOUR)),
 (1, 'Administration prête', 'Vous pouvez modérer les annonces et gérer les utilisateurs.', 'admin', 'espace-admin.php', 0, NOW()),
 (1, 'Nouveau signalement', 'Une annonce a été signalée et attend une vérification.', 'signalement', 'espace-admin.php', 0, DATE_SUB(NOW(), INTERVAL 1 HOUR));
+
+INSERT INTO favorites (id_user, id_product, date_creation) VALUES
+(3, 1, DATE_SUB(NOW(), INTERVAL 3 HOUR)),
+(3, 7, DATE_SUB(NOW(), INTERVAL 1 HOUR));
+
+INSERT INTO admin_logs (id_admin, action, details, date_action) VALUES
+(1, 'demo_initialisation', 'Base de démonstration initialisée', NOW());
