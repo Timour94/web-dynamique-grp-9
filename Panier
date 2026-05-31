@@ -1,0 +1,13 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+require_login();
+$pageTitle = 'Panier - Mercato Nova';
+$items = get_cart_items(current_user_id());
+$total = cart_total($items);
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="page-title"><div><p class="eyebrow">Validation de transaction</p><h1>Votre panier</h1><p>Vérifiez les produits avant la confirmation du paiement simulé.</p></div><a class="btn secondary" href="<?= e(url('catalogue.php')) ?>">Continuer mes achats</a></section>
+<div class="checkout-steps"><span class="active">1 Panier</span><span>2 Livraison</span><span>3 Paiement simulé</span><span>4 Confirmation</span></div>
+<?php if (!$items): ?>
+    <div class="empty-state">Votre panier est vide. <a href="<?= e(url('catalogue.php')) ?>">Voir le catalogue</a></div>
+
