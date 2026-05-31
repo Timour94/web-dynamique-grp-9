@@ -1,0 +1,112 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+require_login();
+
+$user = current_user();
+if (!$user) {
+    redirect('connexion.php');
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    $result = update_user_profile((int)$user['id_user'], $_POST);
+    if ($result['success']) {
+        flash('success', 'Profil mis à jour avec succès.');
+        redirect('profil.php');
+    }
+    foreach ($result['errors'] as $error) {
+        flash('error', $error);
+    }
+    $user = array_merge($user, [
+        'prenom' => $_POST['prenom'] ?? $user['prenom'],
+        'nom' => $_POST['nom'] ?? $user['nom'],
+        'telephone' => $_POST['telephone'] ?? $user['telephone'],
+        'adresse' => $_POST['adresse'] ?? $user['adresse'],
+        'ville' => $_POST['ville'] ?? $user['ville'],
+        'code_postal' => $_POST['code_postal'] ?? $user['code_postal'],
+    ]);
+}
+
+$pageTitle = 'Mon profil - Mercato Nova';
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="page-title">
+    <div>
+        <p class="eyebrow">Compte utilisateur</p>
+        <h1>Modifier mon profil</h1>
+        <p>Mettez à jour vos informations personnelles et, si besoin, votre mot de passe.</p>
+    </div>
+    <a class="btn secondary" href="<?= e(url(has_role('admin') ? 'espace-admin.php' : (has_role('vendeur') ? 'espace-vendeur.php' : 'espace-client.php'))) ?>">Retour à mon espace</a>
+</section>
+
+<section class="auth-card wide">
+    <div class="auth-header">
+        <p class="eyebrow">Informations personnelles</p>
+        <h2><?= e($user['prenom'] . ' ' . $user['nom']) ?></h2>
+        <p class="muted">Votre adresse e-mail et votre rôle ne sont pas modifiables depuis cette page.</p>
+    </div>
+
+    <form method="post" class="form-grid">
+        <?= csrf_field() ?>
+
+        <label>
+            Prénom
+            <input name="prenom" value="<?= e($user['prenom'] ?? '') ?>" required>
+        </label>
+
+        <label>
+            Nom
+            <input name="nom" value="<?= e($user['nom'] ?? '') ?>" required>
+        </label>
+
+        <label>
+            Email
+            <input value="<?= e($user['email'] ?? '') ?>" disabled>
+        </label>
+
+        <label>
+            Rôle
+            <input value="<?= e($user['nom_role'] ?? '') ?>" disabled>
+        </label>
+
+        <label>
+            Téléphone
+            <input name="telephone" value="<?= e($user['telephone'] ?? '') ?>" placeholder="0600000000">
+        </label>
+
+        <label>
+            Ville
+            <input name="ville" value="<?= e($user['ville'] ?? '') ?>" placeholder="Paris">
+        </label>
+
+        <label>
+            Code postal
+            <input name="code_postal" value="<?= e($user['code_postal'] ?? '') ?>" placeholder="75000">
+        </label>
+
+        <label class="full">
+            Adresse
+            <input name="adresse" value="<?= e($user['adresse'] ?? '') ?>" placeholder="Adresse de livraison">
+        </label>
+
+        <div class="full divider"></div>
+
+        <label>
+            Mot de passe actuel
+            <input type="password" name="current_password" autocomplete="current-password" placeholder="Uniquement si changement">
+        </label>
+
+        <label>
+            Nouveau mot de passe
+            <input type="password" name="new_password" autocomplete="new-password" placeholder="8 caractères minimum">
+        </label>
+
+        <label>
+            Confirmer le nouveau mot de passe
+            <input type="password" name="confirm_password" autocomplete="new-password" placeholder="Retapez le mot de passe">
+        </label>
+
+        <button class="btn full" type="submit">Enregistrer les modifications</button>
+    </form>
+</section>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
