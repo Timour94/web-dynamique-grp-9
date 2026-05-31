@@ -1,0 +1,7 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+require_role(['vendeur','admin']);
+$sales = get_sales_by_seller(current_user_id());
+$pageTitle = 'Mes ventes';
+require_once __DIR__ . '/partials/header.php';
+?>
