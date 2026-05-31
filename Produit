@@ -19,3 +19,18 @@ require_once __DIR__ . '/partials/header.php';
         <div class="dashboard-grid" style="grid-template-columns:repeat(2,1fr)">
             <div class="dashboard-card"><strong><?= e($product['etat_produit']) ?></strong><span>État</span></div>
             <div class="dashboard-card"><strong><?= (int)$product['stock'] ?></strong><span>Stock</span></div>
+ </div>
+        <?php if ($product['prix_achat_immediat']): ?><p class="price">Achat immédiat : <?= money_format_fr((float)$product['prix_achat_immediat']) ?></p><?php endif; ?>
+        <?php if (!empty($product['prix_actuel'])): ?><p class="price">Prix actuel enchère : <?= money_format_fr((float)$product['prix_actuel']) ?></p><?php endif; ?>
+        <div class="actions-row">
+            <?php if (is_logged_in() && in_array($product['type_vente'], ['achat_immediat', 'mixte'], true) && (int)$product['id_vendeur'] !== current_user_id()): ?><form action="<?= e(url('backend/api/cart/add.php')) ?>" method="post"><?= csrf_field() ?><input type="hidden" name="id_product" value="<?= (int)$product['id_product'] ?>"><button class="btn" type="submit">Ajouter au panier</button></form><?php endif; ?>
+            <?php if (in_array($product['type_vente'], ['enchere', 'mixte'], true) && !empty($product['id_auction'])): ?><a class="btn secondary" href="<?= e(url('enchere.php?id=' . (int)$product['id_product'])) ?>">Voir l’enchère</a><?php endif; ?>
+            <?php if (in_array($product['type_vente'], ['negociation', 'mixte'], true)): ?><a class="btn secondary" href="<?= e(url('negotiation.php?product_id=' . (int)$product['id_product'])) ?>">Négocier le prix</a><?php endif; ?>
+            <?php if (!is_logged_in()): ?><a class="btn" href="<?= e(url('connexion.php')) ?>">Se connecter pour acheter</a><?php endif; ?>
+        </div>
+        <div class="seller-card"><h3>Vendeur</h3><p><strong><?= e($product['vendeur_prenom'] . ' ' . $product['vendeur_nom']) ?></strong></p><p class="muted">Profil vendeur actif sur Mercato Nova.</p></div>
+        <div class="trust-box"><strong>Informations de transaction</strong><span>Validation côté serveur</span><span>Transactions historisées</span><span>Notifications automatiques</span></div>
+        <?php if (is_logged_in() && (int)$product['id_vendeur'] !== current_user_id()): ?><details class="report-box"><summary>Signaler cette annonce</summary><form method="post" action="<?= e(url('backend/api/products/report.php')) ?>"><?= csrf_field() ?><input type="hidden" name="id_product" value="<?= (int)$product['id_product'] ?>"><input name="motif" placeholder="Motif" required><textarea name="description" placeholder="Description"></textarea><button class="btn secondary" type="submit">Envoyer le signalement</button></form></details><?php endif; ?>
+    </div>
+</section>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
