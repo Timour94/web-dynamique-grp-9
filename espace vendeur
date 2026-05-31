@@ -1,21 +1,84 @@
 <?php
 require_once __DIR__ . '/backend/bootstrap.php';
 require_role(['vendeur','admin']);
+
 $pageTitle = 'Espace vendeur - Mercato Nova';
 $products = get_user_products(current_user_id());
 $sales = get_sales_by_seller(current_user_id());
 $negs = get_user_negotiations(current_user_id());
 require_once __DIR__ . '/partials/header.php';
 ?>
-<section class="section-head"><div><p class="eyebrow">Espace vendeur</p><h1>Gérez votre boutique Mercato Nova</h1><p>Création d’annonces, suivi des ventes, enchères et négociations.</p></div><a class="btn" href="creer-annonce.php">Créer une annonce</a></section>
+<section class="section-head">
+    <div>
+        <p class="eyebrow">Espace vendeur</p>
+        <h1>Gérez votre boutique Mercato Nova</h1>
+        <p>Création d’annonces, suivi des ventes, enchères, négociations et archivage des produits.</p>
+    </div>
+    <div class="actions-row">
+        <a class="btn secondary" href="<?= e(url('profil.php')) ?>">Modifier mon profil</a>
+        <a class="btn" href="<?= e(url('creer-annonce.php')) ?>">Créer une annonce</a>
+    </div>
+</section>
+
 <div class="dashboard-grid">
-    <a class="dashboard-card" href="mes-ventes.php"><strong><?= count($sales) ?></strong><span>Ventes</span></a>
-    <a class="dashboard-card" href="mes-negociations.php"><strong><?= count($negs) ?></strong><span>Négociations</span></a>
+    <a class="dashboard-card" href="<?= e(url('mes-ventes.php')) ?>"><strong><?= count($sales) ?></strong><span>Ventes</span></a>
+    <a class="dashboard-card" href="<?= e(url('mes-negociations.php')) ?>"><strong><?= count($negs) ?></strong><span>Négociations</span></a>
     <div class="dashboard-card"><strong><?= count($products) ?></strong><span>Annonces</span></div>
-    <a class="dashboard-card" href="notifications.php"><strong><?= unread_notifications_count(current_user_id()) ?></strong><span>Notifications</span></a>
+    <a class="dashboard-card" href="<?= e(url('notifications.php')) ?>"><strong><?= unread_notifications_count(current_user_id()) ?></strong><span>Notifications</span></a>
 </div>
-<section class="section-head"><div><p class="eyebrow">Gestion</p><h2>Mes annonces</h2></div></section>
-<div class="table-wrap"><table><thead><tr><th>Titre</th><th>Type</th><th>Prix</th><th>Statut</th><th>Action</th></tr></thead><tbody>
-<?php foreach ($products as $p): ?><tr><td><?= e($p['titre']) ?></td><td><?= e($p['type_vente']) ?></td><td><?= money_format_fr((float)($p['prix_achat_immediat'] ?: $p['prix_initial'])) ?></td><td><span class="status <?= e($p['statut']) ?>"><?= e($p['statut']) ?></span></td><td><a class="btn secondary small" href="modifier-annonce.php?id=<?= (int)$p['id_product'] ?>">Modifier</a></td></tr><?php endforeach; ?>
-</tbody></table></div>
+
+<section class="section-head">
+    <div>
+        <p class="eyebrow">Gestion</p>
+        <h2>Mes annonces</h2>
+        <p class="muted">Vous pouvez modifier ou archiver une annonce tant qu’elle n’est pas vendue.</p>
+    </div>
+</section>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Titre</th>
+                <th>Type</th>
+                <th>Prix</th>
+                <th>Stock</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php if (!$products): ?>
+            <tr><td colspan="7">Aucune annonce pour le moment.</td></tr>
+        <?php endif; ?>
+        <?php foreach ($products as $p): ?>
+            <tr>
+                <td><img class="table-thumb" src="<?= e(url($p['image'] ?: DEFAULT_PRODUCT_IMAGE)) ?>" alt="<?= e($p['titre']) ?>"></td>
+                <td><a href="<?= e(url('produit.php?id=' . (int)$p['id_product'])) ?>"><?= e($p['titre']) ?></a></td>
+                <td><?= e($p['type_vente']) ?></td>
+                <td><?= money_format_fr((float)($p['prix_achat_immediat'] ?: $p['prix_initial'])) ?></td>
+                <td><?= (int)$p['stock'] ?></td>
+                <td><span class="status <?= e($p['statut']) ?>"><?= e($p['statut']) ?></span></td>
+                <td>
+                    <div class="actions-row">
+                        <?php if ($p['statut'] !== 'vendu' && $p['statut'] !== 'archive'): ?>
+                            <a class="btn secondary small" href="<?= e(url('modifier-annonce.php?id=' . (int)$p['id_product'])) ?>">Modifier</a>
+                            <form method="post" action="<?= e(url('backend/api/products/delete.php')) ?>" onsubmit="return confirm('Archiver cette annonce ? Elle ne sera plus visible dans le catalogue.');">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="id_product" value="<?= (int)$p['id_product'] ?>">
+                                <button class="btn danger small" type="submit">Archiver</button>
+                            </form>
+                        <?php elseif ($p['statut'] === 'archive'): ?>
+                            <span class="muted">Annonce archivée</span>
+                        <?php else: ?>
+                            <span class="muted">Annonce vendue</span>
+                        <?php endif; ?>
+                    </div>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
