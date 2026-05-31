@@ -1,8 +1,8 @@
-# Mercato Nova
+Mercato Nova
 
 Projet Web dynamique ING2 - Sujet 1.
 
-## Installation avec MAMP
+Installation avec MAMP
 
 1. Copier le dossier `mercato-nova` dans `C:\MAMP\htdocs\`.
 2. Lancer Apache et MySQL dans MAMP.
@@ -15,7 +15,7 @@ Projet Web dynamique ING2 - Sujet 1.
    - `DB_PASS = 'root'` selon la configuration MAMP.
 6. Ouvrir `http://localhost/mercato-nova/`.
 
-## Comptes de demo
+Comptes de demo
 
 - Admin : `admin@mercatonova.local` / `Admin123!`
 - Acheteur : `acheteur@mercatonova.local` / `Acheteur123!`
