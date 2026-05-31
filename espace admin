@@ -1,21 +1,263 @@
 <?php
 require_once __DIR__ . '/backend/bootstrap.php';
 require_role('admin');
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
-    if (isset($_POST['moderate'])) { moderate_product((int)$_POST['id_product'], $_POST['moderate'], current_user_id()); flash('success', 'Action de modération enregistrée.'); redirect('espace-admin.php'); }
-    if (isset($_POST['user_status'])) { set_user_status((int)$_POST['id_user'], $_POST['user_status'], current_user_id()); flash('success', 'Statut utilisateur modifié.'); redirect('espace-admin.php'); }
+
+    if (isset($_POST['moderate'])) {
+        $ok = moderate_product((int)($_POST['id_product'] ?? 0), (string)$_POST['moderate'], current_user_id());
+        flash($ok ? 'success' : 'error', $ok ? 'Action de modération enregistrée.' : 'Action de modération impossible.');
+        redirect('espace-admin.php');
+    }
+
+    if (isset($_POST['user_status'])) {
+        $ok = set_user_status((int)($_POST['id_user'] ?? 0), (string)$_POST['user_status'], current_user_id());
+        flash($ok ? 'success' : 'error', $ok ? 'Statut utilisateur modifié.' : 'Statut utilisateur invalide.');
+        redirect('espace-admin.php');
+    }
+
+    if (isset($_POST['report_status'])) {
+        $ok = update_report_status((int)($_POST['id_report'] ?? 0), (string)$_POST['report_status'], current_user_id());
+        flash($ok ? 'success' : 'error', $ok ? 'Signalement mis à jour.' : 'Impossible de mettre à jour ce signalement.');
+        redirect('espace-admin.php');
+    }
 }
-$stats = get_dashboard_stats(); $pending = get_pending_products(); $users = get_all_users(); $reports = get_reports();
+
+$stats = get_dashboard_stats();
+$pending = get_pending_products();
+$users = get_all_users();
+$vendors = get_vendor_accounts();
+$reports = get_reports();
+$adminLogs = get_admin_logs(50);
 $pageTitle = 'Administration - Mercato Nova';
 require_once __DIR__ . '/partials/header.php';
 ?>
-<section class="page-title"><div><p class="eyebrow">Back-office</p><h1>Dashboard administrateur</h1><p>Modération, utilisateurs, signalements, cohérence du système et suivi global.</p></div></section>
-<div class="dashboard-grid"><div class="dashboard-card"><strong><?= $stats['users'] ?></strong><span>Utilisateurs</span></div><div class="dashboard-card"><strong><?= $stats['products'] ?></strong><span>Produits</span></div><div class="dashboard-card"><strong><?= $stats['pending'] ?></strong><span>À modérer</span></div><div class="dashboard-card"><strong><?= $stats['orders'] ?></strong><span>Commandes</span></div><div class="dashboard-card"><strong><?= $stats['auctions'] ?></strong><span>Enchères</span></div><div class="dashboard-card"><strong><?= $stats['negotiations'] ?></strong><span>Négociations</span></div></div>
-<section class="section-head"><div><p class="eyebrow">Modération</p><h2>Annonces en attente</h2></div></section>
-<div class="table-wrap"><table><thead><tr><th>Titre</th><th>Vendeur</th><th>Type</th><th>Prix</th><th>Action</th></tr></thead><tbody><?php foreach ($pending as $p): ?><tr><td><?= e($p['titre']) ?></td><td><?= e($p['prenom'].' '.$p['nom']) ?></td><td><?= e($p['type_vente']) ?></td><td><?= money_format_fr((float)($p['prix_achat_immediat'] ?: $p['prix_initial'])) ?></td><td><form method="post" class="actions-row"><?= csrf_field() ?><input type="hidden" name="id_product" value="<?= (int)$p['id_product'] ?>"><button class="btn small" name="moderate" value="accept">Accepter</button><button class="btn danger small" name="moderate" value="refuse">Refuser</button></form></td></tr><?php endforeach; ?></tbody></table></div>
-<section class="section-head"><div><p class="eyebrow">Contrôle</p><h2>Signalements</h2></div></section>
-<div class="table-wrap"><table><thead><tr><th>Produit</th><th>Utilisateur</th><th>Motif</th><th>Description</th><th>Statut</th></tr></thead><tbody><?php foreach ($reports as $r): ?><tr><td><a href="produit.php?id=<?= (int)$r['id_product'] ?>"><?= e($r['titre']) ?></a></td><td><?= e($r['prenom'].' '.$r['nom']) ?></td><td><?= e($r['motif']) ?></td><td><?= e($r['description']) ?></td><td><?= e($r['statut']) ?></td></tr><?php endforeach; ?></tbody></table></div>
-<section class="section-head"><div><p class="eyebrow">Comptes</p><h2>Utilisateurs</h2></div></section>
-<div class="table-wrap"><table><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Action</th></tr></thead><tbody><?php foreach ($users as $u): ?><tr><td><?= e($u['prenom'].' '.$u['nom']) ?></td><td><?= e($u['email']) ?></td><td><?= e($u['nom_role']) ?></td><td><?= e($u['statut_compte']) ?></td><td><?php if ((int)$u['id_user'] !== current_user_id()): ?><form method="post"><?= csrf_field() ?><input type="hidden" name="id_user" value="<?= (int)$u['id_user'] ?>"><button class="btn secondary small" name="user_status" value="<?= $u['statut_compte']==='actif'?'bloque':'actif' ?>"><?= $u['statut_compte']==='actif'?'Bloquer':'Débloquer' ?></button></form><?php endif; ?></td></tr><?php endforeach; ?></tbody></table></div>
+<section class="page-title">
+    <div>
+        <p class="eyebrow">Back-office</p>
+        <h1>Dashboard administrateur</h1>
+        <p>Modération, utilisateurs, vendeurs, signalements, cohérence du système et suivi global.</p>
+    </div>
+</section>
+
+<div class="dashboard-grid">
+    <div class="dashboard-card"><strong><?= $stats['users'] ?></strong><span>Utilisateurs</span></div>
+    <div class="dashboard-card"><strong><?= $stats['products'] ?></strong><span>Produits</span></div>
+    <div class="dashboard-card"><strong><?= $stats['pending'] ?></strong><span>À modérer</span></div>
+    <div class="dashboard-card"><strong><?= $stats['orders'] ?></strong><span>Commandes</span></div>
+    <div class="dashboard-card"><strong><?= $stats['auctions'] ?></strong><span>Enchères</span></div>
+    <div class="dashboard-card"><strong><?= $stats['negotiations'] ?></strong><span>Négociations</span></div>
+</div>
+
+<section class="section-head">
+    <div>
+        <p class="eyebrow">Modération</p>
+        <h2>Annonces en attente</h2>
+    </div>
+</section>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Titre</th>
+                <th>Vendeur</th>
+                <th>Type</th>
+                <th>Prix</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php if (!$pending): ?>
+            <tr><td colspan="5">Aucune annonce en attente.</td></tr>
+        <?php endif; ?>
+        <?php foreach ($pending as $p): ?>
+            <tr>
+                <td><a href="<?= e(url('produit.php?id=' . (int)$p['id_product'])) ?>"><?= e($p['titre']) ?></a></td>
+                <td><?= e($p['prenom'] . ' ' . $p['nom']) ?></td>
+                <td><?= e($p['type_vente']) ?></td>
+                <td><?= money_format_fr((float)($p['prix_achat_immediat'] ?: $p['prix_initial'])) ?></td>
+                <td>
+                    <form method="post" class="actions-row">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="id_product" value="<?= (int)$p['id_product'] ?>">
+                        <button class="btn small" name="moderate" value="accept">Accepter</button>
+                        <button class="btn danger small" name="moderate" value="refuse">Refuser</button>
+                    </form>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+
+<section class="section-head">
+    <div>
+        <p class="eyebrow">Contrôle</p>
+        <h2>Signalements</h2>
+        <p class="muted">Les signalements peuvent être marqués comme ouverts, traités ou rejetés.</p>
+    </div>
+</section>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Produit</th>
+                <th>Utilisateur</th>
+                <th>Motif</th>
+                <th>Description</th>
+                <th>Statut</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php if (!$reports): ?>
+            <tr><td colspan="6">Aucun signalement.</td></tr>
+        <?php endif; ?>
+        <?php foreach ($reports as $r): ?>
+            <tr>
+                <td><a href="<?= e(url('produit.php?id=' . (int)$r['id_product'])) ?>"><?= e($r['titre']) ?></a></td>
+                <td><?= e($r['prenom'] . ' ' . $r['nom']) ?></td>
+                <td><?= e($r['motif']) ?></td>
+                <td><?= e($r['description']) ?></td>
+                <td><span class="status <?= e($r['statut']) ?>"><?= e($r['statut']) ?></span></td>
+                <td>
+                    <form method="post" class="actions-row">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="id_report" value="<?= (int)$r['id_report'] ?>">
+                        <button class="btn secondary small" name="report_status" value="ouvert">Ouvrir</button>
+                        <button class="btn small" name="report_status" value="traite">Traiter</button>
+                        <button class="btn danger small" name="report_status" value="rejete">Rejeter</button>
+                    </form>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+
+<section class="section-head">
+    <div>
+        <p class="eyebrow">Vendeurs</p>
+        <h2>Gestion des vendeurs</h2>
+        <p class="muted">Cette section permet de distinguer les vendeurs des autres utilisateurs et de suivre leur activité.</p>
+    </div>
+</section>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Vendeur</th>
+                <th>Email</th>
+                <th>Annonces</th>
+                <th>Publiées</th>
+                <th>Ventes</th>
+                <th>CA simulé</th>
+                <th>Statut</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php if (!$vendors): ?>
+            <tr><td colspan="8">Aucun vendeur.</td></tr>
+        <?php endif; ?>
+        <?php foreach ($vendors as $v): ?>
+            <tr>
+                <td><?= e($v['prenom'] . ' ' . $v['nom']) ?></td>
+                <td><?= e($v['email']) ?></td>
+                <td><?= (int)$v['nb_annonces'] ?></td>
+                <td><?= (int)$v['nb_annonces_publiees'] ?></td>
+                <td><?= (int)$v['nb_ventes'] ?></td>
+                <td><?= money_format_fr((float)$v['chiffre_affaires']) ?></td>
+                <td><?= e($v['statut_compte']) ?></td>
+                <td>
+                    <form method="post">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="id_user" value="<?= (int)$v['id_user'] ?>">
+                        <button class="btn secondary small" name="user_status" value="<?= $v['statut_compte'] === 'actif' ? 'bloque' : 'actif' ?>">
+                            <?= $v['statut_compte'] === 'actif' ? 'Bloquer' : 'Débloquer' ?>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+
+<section class="section-head">
+    <div>
+        <p class="eyebrow">Comptes</p>
+        <h2>Tous les utilisateurs</h2>
+    </div>
+</section>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Statut</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($users as $u): ?>
+            <tr>
+                <td><?= e($u['prenom'] . ' ' . $u['nom']) ?></td>
+                <td><?= e($u['email']) ?></td>
+                <td><?= e($u['nom_role']) ?></td>
+                <td><?= e($u['statut_compte']) ?></td>
+                <td>
+                    <?php if ((int)$u['id_user'] !== current_user_id()): ?>
+                        <form method="post">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="id_user" value="<?= (int)$u['id_user'] ?>">
+                            <button class="btn secondary small" name="user_status" value="<?= $u['statut_compte'] === 'actif' ? 'bloque' : 'actif' ?>">
+                                <?= $u['statut_compte'] === 'actif' ? 'Bloquer' : 'Débloquer' ?>
+                            </button>
+                        </form>
+                    <?php endif; ?>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+
+<section class="section-head">
+    <div>
+        <p class="eyebrow">Traçabilité admin</p>
+        <h2>Historique des décisions</h2>
+        <p class="muted">Les actions de modération, de gestion des comptes et de traitement des signalements sont conservées.</p>
+    </div>
+</section>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Administrateur</th>
+                <th>Action</th>
+                <th>Détails</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php if (!$adminLogs): ?>
+            <tr><td colspan="4">Aucune action enregistrée.</td></tr>
+        <?php endif; ?>
+        <?php foreach ($adminLogs as $log): ?>
+            <tr>
+                <td><?= e($log['date_action']) ?></td>
+                <td><?= e($log['prenom'] . ' ' . $log['nom']) ?></td>
+                <td><?= e($log['action']) ?></td>
+                <td><?= e($log['details']) ?></td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
+
