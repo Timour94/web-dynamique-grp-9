@@ -43,7 +43,32 @@ require_once __DIR__ . '/partials/header.php';
 <?php endforeach; ?>
 </div>
 <?php if ($neg['statut_negociation'] === 'en_cours'): ?>
-<section class="auth-card wide"><h2>Répondre à la négociation</h2><form method="post" class="form-grid"><?= csrf_field() ?><input type="hidden" name="action" value="counter"><input type="hidden" name="id_negotiation" value="<?= (int)$neg['id_negotiation'] ?>"><input type="number" step="0.01" name="offre_prix" placeholder="Nouvelle offre" required><textarea name="message" placeholder="Message"></textarea><button class="btn" type="submit">Envoyer une contre-offre</button></form><div class="actions-row"><form method="post"><?= csrf_field() ?><input type="hidden" name="id_negotiation" value="<?= (int)$neg['id_negotiation'] ?>"><button class="btn" name="action" value="accept">Accepter</button></form><form method="post"><?= csrf_field() ?><input type="hidden" name="id_negotiation" value="<?= (int)$neg['id_negotiation'] ?>"><button class="btn danger" name="action" value="refuse">Refuser</button></form><form method="post"><?= csrf_field() ?><input type="hidden" name="id_negotiation" value="<?= (int)$neg['id_negotiation'] ?>"><button class="btn secondary" name="action" value="abandon">Abandonner</button></form></div></section>
+<?php $canAnswer = can_answer_negotiation($neg, $userId); ?>
+<section class="auth-card wide">
+    <h2><?= $canAnswer ? 'Répondre à la dernière offre' : 'En attente de réponse' ?></h2>
+    <?php if ($canAnswer): ?>
+        <form method="post" class="form-grid">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="counter">
+            <input type="hidden" name="id_negotiation" value="<?= (int)$neg['id_negotiation'] ?>">
+            <input type="number" step="0.01" name="offre_prix" placeholder="Nouvelle offre" required>
+            <textarea name="message" placeholder="Message"></textarea>
+            <button class="btn" type="submit">Envoyer une contre-offre</button>
+        </form>
+        <div class="actions-row">
+            <form method="post"><?= csrf_field() ?><input type="hidden" name="id_negotiation" value="<?= (int)$neg['id_negotiation'] ?>"><button class="btn" name="action" value="accept">Accepter la dernière offre</button></form>
+            <form method="post"><?= csrf_field() ?><input type="hidden" name="id_negotiation" value="<?= (int)$neg['id_negotiation'] ?>"><button class="btn danger" name="action" value="refuse">Refuser</button></form>
+            <form method="post"><?= csrf_field() ?><input type="hidden" name="id_negotiation" value="<?= (int)$neg['id_negotiation'] ?>"><button class="btn secondary" name="action" value="abandon">Abandonner</button></form>
+        </div>
+    <?php else: ?>
+        <p class="muted">Votre dernière offre a été envoyée. Vous devez attendre la réponse de l’autre participant avant d’accepter, refuser ou renvoyer une offre.</p>
+        <form method="post" class="actions-row">
+            <?= csrf_field() ?>
+            <input type="hidden" name="id_negotiation" value="<?= (int)$neg['id_negotiation'] ?>">
+            <button class="btn secondary" name="action" value="abandon">Abandonner la négociation</button>
+        </form>
+    <?php endif; ?>
+</section>
 <?php endif; ?>
 <?php else: ?><div class="empty-state">Négociation introuvable.</div><?php endif; ?>
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
