@@ -1,0 +1,26 @@
+<?php
+require_once __DIR__ . '/backend/bootstrap.php';
+require_login();
+$favorites = get_user_favorites(current_user_id());
+$pageTitle = 'Mes favoris - Mercato Nova';
+require_once __DIR__ . '/partials/header.php';
+?>
+<section class="page-title">
+    <div>
+        <p class="eyebrow">Wishlist</p>
+        <h1>Mes favoris</h1>
+        <p>Retrouvez les annonces sauvegardées pour les acheter, enchérir ou négocier plus tard.</p>
+    </div>
+    <a class="btn secondary" href="<?= e(url('catalogue.php')) ?>">Explorer le catalogue</a>
+</section>
+
+<?php if ($favorites): ?>
+    <div class="product-grid">
+        <?php foreach ($favorites as $product): ?>
+            <?php require __DIR__ . '/partials/product-card.php'; ?>
+        <?php endforeach; ?>
+    </div>
+<?php else: ?>
+    <div class="empty-state">Aucun favori pour le moment. Ajoutez des produits depuis le catalogue ou une fiche produit.</div>
+<?php endif; ?>
+<?php require_once __DIR__ . '/partials/footer.php'; ?>
